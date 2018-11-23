@@ -7,10 +7,10 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.example.kru13.sokoview.MainActivity"
+    tools:context="com.example.safra.bounce.MainActivity"
     android:orientation="vertical">
 
-    <com.example.kru13.sokoview.MyView
+    <com.example.safra.bounce.MyView
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

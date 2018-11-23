@@ -1,8 +1,6 @@
-package com.example.kru13.sokoview;
+package com.example.safra.bounce;
 
 import android.app.Activity;
-import android.os.Environment;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 public class MainActivity extends Activity {
@@ -11,6 +9,5 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
     }
 }

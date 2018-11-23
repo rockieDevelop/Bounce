@@ -1,4 +1,4 @@
-package com.example.kru13.sokoview;
+package com.example.safra.bounce;
 
 import android.graphics.Canvas;
 

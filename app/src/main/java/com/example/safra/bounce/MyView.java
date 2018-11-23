@@ -1,4 +1,4 @@
-package com.example.kru13.sokoview;
+package com.example.safra.bounce;
 
 import android.content.Context;
 import android.graphics.Bitmap;
