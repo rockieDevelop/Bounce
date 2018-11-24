@@ -114,19 +114,20 @@ public class MyView extends View{
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
+        float xDown = event.getX();
+        float yDown = event.getY();
+
         switch(event.getAction())
         {
             case MotionEvent.ACTION_UP:
             {
                 player.setxMove(0);
+                player.setyMove(0);
                 return true;
             }
 
             case MotionEvent.ACTION_DOWN:
             {
-                float xDown = event.getX();
-                float yDown = event.getY();
-
                 if( xDown > bLeftX && xDown < bLeftX + optionsLeft.outWidth*2 && yDown > bLeftY && yDown < bLeftY + optionsLeft.outHeight*2 )
                 {
                     player.setxMove(-player.getSpeed());
@@ -138,9 +139,12 @@ public class MyView extends View{
                     //Log.d("test", "2 player xMove" + player.getxMove());
                     //Toast.makeText(getContext(), "Right " , Toast.LENGTH_SHORT).show();
                 }
-                if( xDown > bUpX && xDown < bUpX + optionsUp.outWidth*2 && yDown > bUpY && yDown < bUpY + optionsUp.outHeight*2 )
+
+                if( xDown > bUpX && xDown < bUpX + optionsUp.outWidth*2 && yDown > bUpY && yDown < bUpY + optionsUp.outHeight*2 && !player.jumping)
                 {
-                    Toast.makeText(getContext(), "Up " , Toast.LENGTH_SHORT).show();
+                    player.setDistanceJumped(0);
+                    player.jumping = true;
+                    //Toast.makeText(getContext(), "Up " , Toast.LENGTH_SHORT).show();
                 }
                 return true;
             }
@@ -176,6 +180,7 @@ public class MyView extends View{
 
             firstUse = false;
         }
+        Log.d("test",""+player.yMove);
         player.update();
     }
 
@@ -193,19 +198,19 @@ public class MyView extends View{
     protected void drawButtons(Canvas canvas){
 
         bLeftX = WIDTH/2;
-        bLeftY = (canvas.getHeight() - HEIGHT/2) - optionsLeft.outHeight*2;
+        bLeftY = (canvas.getHeight() - HEIGHT/2) - optionsLeft.outHeight;
         canvas.drawBitmap(MyView.BMP[6], null,
-                new Rect( bLeftX, bLeftY, bLeftX + (optionsLeft.outWidth*2), bLeftY + optionsLeft.outHeight*2 ), null);
+                new Rect( bLeftX, bLeftY, bLeftX + (optionsLeft.outWidth), bLeftY + optionsLeft.outHeight ), null);
 
-        bRightX = bLeftX + optionsLeft.outWidth*2 + WIDTH/2;
-        bRightY = (canvas.getHeight() - HEIGHT/2) - optionsRight.outHeight*2;
+        bRightX = bLeftX + optionsLeft.outWidth + WIDTH/2;
+        bRightY = (canvas.getHeight() - HEIGHT/2) - optionsRight.outHeight;
         canvas.drawBitmap(MyView.BMP[7], null,
-                new Rect( bRightX, bRightY, bRightX + (optionsRight.outWidth*2), bRightY + optionsRight.outHeight*2), null);
+                new Rect( bRightX, bRightY, bRightX + (optionsRight.outWidth), bRightY + optionsRight.outHeight), null);
 
-        bUpX = (canvas.getWidth() - WIDTH/2) - optionsUp.outWidth*2;
-        bUpY = (canvas.getHeight() - HEIGHT/2) - optionsUp.outHeight*2;
+        bUpX = (canvas.getWidth() - WIDTH/2) - optionsUp.outWidth;
+        bUpY = (canvas.getHeight() - HEIGHT/2) - optionsUp.outHeight;
         canvas.drawBitmap(MyView.BMP[8], null,
-                new Rect( bUpX, bUpY, bUpX + (optionsUp.outWidth*2), bUpY + optionsUp.outHeight*2), null);
+                new Rect( bUpX, bUpY, bUpX + (optionsUp.outWidth), bUpY + optionsUp.outHeight), null);
     }
 
     protected void loadMap(Canvas canvas, int level[]){
@@ -228,13 +233,15 @@ public class MyView extends View{
     }
 
     public Tile getTile(int x, int y){
-        Log.d("tile", "x "+x+" y"+y);
         if(x < 0 || y < 0 || x >= this.getWidth() || y >= this.getHeight())
             return Tile.empty;
 
         Tile t = Tile.tiles[tiles[x][y]];
         if(t == null)
             return Tile.wall;
+
+        t.setX(x);
+        t.setY(y);
         return t;
     }
 }

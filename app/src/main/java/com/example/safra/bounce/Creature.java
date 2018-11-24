@@ -12,6 +12,9 @@ public abstract class Creature {
     protected float speed;
     protected float xMove, yMove;
 
+    protected boolean falling = true;
+    protected boolean jumping = false;
+
     protected int boundsX, boundsY, boundsWidth, boundsHeight;
 
     protected MyView view;
@@ -35,23 +38,61 @@ public abstract class Creature {
     }
 
     protected void moveX(){
-        if(xMove > 0){
-            if(!collision((int)(myLeft + boundsX + boundsWidth)/MyView.WIDTH, (int)(myTop + boundsY)/MyView.HEIGHT) ||
-                    !collision((int)(myLeft + boundsX + boundsWidth)/MyView.WIDTH,(int)(myTop + boundsY + boundsHeight)/MyView.HEIGHT)){
+        if(xMove > 0){ //vpravo
+            int tx = (int) (myLeft + xMove + boundsX + boundsWidth) / MyView.WIDTH;
+
+            if(!collision(tx, (int)(myTop + boundsY)/MyView.HEIGHT) &&
+                    !collision(tx,(int)(myTop + boundsY + boundsHeight)/MyView.HEIGHT)){
                 myLeft += xMove;
             }
+            else {
+                //myLeft = ((int) (myLeft + boundsX) / MyView.WIDTH) * MyView.WIDTH;
+                myLeft = tx * MyView.WIDTH - boundsX - boundsWidth - 1;
+            }
         }
-        else if(xMove < 0){
-            if(!collision((int)myLeft/MyView.WIDTH, (int)(myTop + boundsY)/MyView.HEIGHT) ||
-                    !collision((int)myLeft/MyView.WIDTH,(int)(myTop + boundsY + boundsHeight)/MyView.HEIGHT)){
+        else if(xMove < 0){ //vlevo
+            int tx = (int) (myLeft + xMove + boundsX) / MyView.WIDTH;
+
+            if(!collision(tx, (int)(myTop + boundsY)/MyView.HEIGHT) &&
+                    !collision(tx,(int)(myTop + boundsY + boundsHeight)/MyView.HEIGHT)){
                 myLeft += xMove;
+            }
+            else {
+                //myLeft = ((int)(myLeft + boundsX + boundsWidth)/MyView.WIDTH) * MyView.WIDTH;
+                myLeft = tx * MyView.WIDTH + MyView.WIDTH - boundsX;
             }
         }
         //Log.d("test", "3 moveX function" + myLeft);
     }
 
     protected void moveY(){
-        myTop += yMove;
+        if(yMove > 0) { //dolu
+            int ty = (int)(myTop + yMove + boundsY + boundsHeight) / MyView.HEIGHT;
+
+            if (!collision((int) (myLeft + boundsX) / MyView.WIDTH, ty) &&
+                    !collision((int) (myLeft + boundsX + boundsWidth) / MyView.WIDTH, ty)) {
+                myTop += yMove;
+                falling = true;
+            }else{
+                //myTop = ((int) (myTop + boundsY) / MyView.HEIGHT)*MyView.HEIGHT;
+                myTop = ty * MyView.HEIGHT - boundsY - boundsHeight - 1;
+                falling = false;
+            }
+        }
+        else if(yMove < 0) { //nahoru
+            int ty = (int) (myTop + boundsY + yMove) / MyView.HEIGHT;
+
+            if (!collision((int) (myLeft + boundsX) / MyView.WIDTH, ty) &&
+                    !collision((int) (myLeft + boundsX + boundsWidth) / MyView.WIDTH, ty)) {
+                myTop += yMove;
+            }else{
+                //myTop = ((int) (myTop + boundsY + boundsHeight) / MyView.HEIGHT)*MyView.HEIGHT;
+                myTop = ty * MyView.HEIGHT + MyView.HEIGHT - boundsY;
+                jumping = false;
+                yMove = 0;
+            }
+        }
+
     }
 
     protected boolean collision(int x, int y){
