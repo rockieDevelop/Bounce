@@ -26,10 +26,22 @@ public class MyView extends View{
 
     public static Bitmap[] BMP;
 
+    BitmapFactory.Options optionsLeft = new BitmapFactory.Options();
+    BitmapFactory.Options optionsRight = new BitmapFactory.Options();
+    BitmapFactory.Options optionsUp = new BitmapFactory.Options();
+
     public static int WIDTH;
     public static int HEIGHT;
 
+    private int bLeftX, bLeftY;
+    private int bRightX, bRightY;
+    private int bUpX, bUpY;
+
+    private boolean firstUse = true;
+
     private List<Enemy> enemies = new ArrayList<Enemy>();
+    //private List<Tile> tiles = new ArrayList<>();
+    private int[][] tiles;
     private Player player;
 
     private int level[] = {
@@ -72,6 +84,7 @@ public class MyView extends View{
     }
 
     void init(Context context) {
+
         BMP = new Bitmap[9];
 
         BMP[0] = BitmapFactory.decodeResource(getResources(), R.drawable.empty);
@@ -85,72 +98,53 @@ public class MyView extends View{
         BMP[7] = BitmapFactory.decodeResource(getResources(), R.drawable.arrowright);
         BMP[8] = BitmapFactory.decodeResource(getResources(), R.drawable.arrowup);
 
-        for(int i = 0; i < numOfEnemies; i++){
-            enemies.add(new Enemy(level[7+(i*2)],level[8+(i*2)], 3));
-        }
-        player = new Player(playerX, playerY, 5);
-
+        optionsLeft.inJustDecodeBounds =  optionsRight.inJustDecodeBounds = optionsUp.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(getResources(),R.drawable.arrowleft, optionsLeft);
+        BitmapFactory.decodeResource(getResources(),R.drawable.arrowright, optionsRight);
+        BitmapFactory.decodeResource(getResources(),R.drawable.arrowup, optionsUp);
     }
 
-    void move(float xPressed, float yPressed){
-        Point p = new Point();
-        getDisplay().getSize(p);
-        p = new Point(p.x/2, p.y/2);
-        float xSize = p.x;
-        float ySize = p.y;
-
+    void move(){
         //Toast.makeText(getContext(), "xDown " + xDown, Toast.LENGTH_SHORT).show();
-        //Toast.makeText(getContext(), "yDown " + yDown, Toast.LENGTH_SHORT).show();
 
-        float x = (xPressed - p.x) / p.x;
-        float y = (yPressed - p.y) / p.y;
-        //Toast.makeText(getContext(), "x " + x + " y " + y, Toast.LENGTH_SHORT).show();
-        //move right
-        if(x > 0 && x - 0 >= Math.abs(y - 0))
-        {
-            level[playerY*10+playerX] = 0;
-            level[playerY*10+playerX+1] = 4;
-            playerX++;
-            invalidate();
-        }
-        //move left
-        else if(x < 0 && 0 - x > Math.abs(y - 0))
-        {
-            level[playerY*10+playerX] = 0;
-            level[playerY*10+playerX-1] = 4;
-            playerX--;
-            invalidate();
-        }
-        //move up
-        else if(y > 0)
-        {
-            level[playerY*10+playerX] = 0;
-            level[(playerY+1)*10+playerX] = 4;
-            playerY++;
-            invalidate();
-        }
-        //move down
-        else
-        {
-            level[playerY*10+playerX] = 0;
-            level[(playerY-1)*10+playerX] = 4;
-            playerY--;
-            invalidate();
-        }
+
     }
+
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
         switch(event.getAction())
         {
+            case MotionEvent.ACTION_UP:
+            {
+                player.setxMove(0);
+                return true;
+            }
+
             case MotionEvent.ACTION_DOWN:
             {
                 float xDown = event.getX();
                 float yDown = event.getY();
-                move(xDown, yDown);
-                break;
+
+                if( xDown > bLeftX && xDown < bLeftX + optionsLeft.outWidth*2 && yDown > bLeftY && yDown < bLeftY + optionsLeft.outHeight*2 )
+                {
+                    player.setxMove(-player.getSpeed());
+                    //Toast.makeText(getContext(), "Left " , Toast.LENGTH_SHORT).show();
+                }
+                if( xDown > bRightX && xDown < bRightX + optionsRight.outWidth*2 && yDown > bRightY && yDown < bRightY + optionsRight.outHeight*2 )
+                {
+                    player.setxMove(player.getSpeed());
+                    //Log.d("test", "2 player xMove" + player.getxMove());
+                    //Toast.makeText(getContext(), "Right " , Toast.LENGTH_SHORT).show();
+                }
+                if( xDown > bUpX && xDown < bUpX + optionsUp.outWidth*2 && yDown > bUpY && yDown < bUpY + optionsUp.outHeight*2 )
+                {
+                    Toast.makeText(getContext(), "Up " , Toast.LENGTH_SHORT).show();
+                }
+                return true;
             }
+
         }
 
         return super.onTouchEvent(event);
@@ -160,28 +154,87 @@ public class MyView extends View{
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         WIDTH = w / ly;
         HEIGHT = h / lx;
-        Log.d("size", WIDTH + " w  h " + HEIGHT);
-
-        //BitmapFactory.Options options = new BitmapFactory.Options();
-        //options.inJustDecodeBounds = true;
-        //BitmapFactory.decodeResource(getResources(),R.drawable.player, options);
-        //Log.d("size", options.outWidth + " w1  h1 " + options.outHeight);
 
         super.onSizeChanged(w, h, oldw, oldh);
     }
 
+    protected void update(){
+        if(firstUse){
+            for(int i = 0; i < numOfEnemies; i++){
+                enemies.add(new Enemy(level[7+(i*2)],level[8+(i*2)], 3, this));
+            }
+
+            tiles = new int[lx][ly];
+            for (int i = 0; i < lx; i++) {
+                for (int j = 0; j < ly; j++) {
+                    //tiles.add(new Tile(level[(i*12 + j)+7+(numOfEnemies*2)], j*WIDTH, (j+1)*WIDTH, i*HEIGHT, (i+1)*HEIGHT));
+                    tiles[j][i] = level[(i*12 + j)+7+(numOfEnemies*2)];
+                }
+            }
+
+            player = new Player(playerX, playerY, 10, this);
+
+            firstUse = false;
+        }
+        player.update();
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
-            loadMap(canvas, level);
-            player.render(canvas);
+        update();
+
+        loadMap(canvas, level);
+        player.render(canvas);
+        drawButtons(canvas);
+
+        invalidate();
+    }
+
+    protected void drawButtons(Canvas canvas){
+
+        bLeftX = WIDTH/2;
+        bLeftY = (canvas.getHeight() - HEIGHT/2) - optionsLeft.outHeight*2;
+        canvas.drawBitmap(MyView.BMP[6], null,
+                new Rect( bLeftX, bLeftY, bLeftX + (optionsLeft.outWidth*2), bLeftY + optionsLeft.outHeight*2 ), null);
+
+        bRightX = bLeftX + optionsLeft.outWidth*2 + WIDTH/2;
+        bRightY = (canvas.getHeight() - HEIGHT/2) - optionsRight.outHeight*2;
+        canvas.drawBitmap(MyView.BMP[7], null,
+                new Rect( bRightX, bRightY, bRightX + (optionsRight.outWidth*2), bRightY + optionsRight.outHeight*2), null);
+
+        bUpX = (canvas.getWidth() - WIDTH/2) - optionsUp.outWidth*2;
+        bUpY = (canvas.getHeight() - HEIGHT/2) - optionsUp.outHeight*2;
+        canvas.drawBitmap(MyView.BMP[8], null,
+                new Rect( bUpX, bUpY, bUpX + (optionsUp.outWidth*2), bUpY + optionsUp.outHeight*2), null);
     }
 
     protected void loadMap(Canvas canvas, int level[]){
-        for (int i = 0; i < lx; i++) {
+        /*for (int i = 0; i < lx; i++) {
             for (int j = 0; j < ly; j++) {
                 canvas.drawBitmap(BMP[level[(i*12 + j)+7+(numOfEnemies*2)]], null,
                         new Rect(j*WIDTH, i*HEIGHT,(j+1)*WIDTH, (i+1)*HEIGHT), null);
             }
+        }*/
+        /*for(Tile t : tiles){
+            t.render(canvas);
+        }*/
+        for (int i = 0; i < lx; i++) {
+            for (int j = 0; j < ly; j++) {
+                //canvas.drawBitmap(BMP[tiles[j][i]], null,
+                //        new Rect(j*WIDTH, i*HEIGHT,(j+1)*WIDTH, (i+1)*HEIGHT), null);
+                getTile(j,i).render(canvas, j*WIDTH, (j+1)*WIDTH, i*HEIGHT, (i+1)*HEIGHT);
+            }
         }
+    }
+
+    public Tile getTile(int x, int y){
+        Log.d("tile", "x "+x+" y"+y);
+        if(x < 0 || y < 0 || x >= this.getWidth() || y >= this.getHeight())
+            return Tile.empty;
+
+        Tile t = Tile.tiles[tiles[x][y]];
+        if(t == null)
+            return Tile.wall;
+        return t;
     }
 }

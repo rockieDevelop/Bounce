@@ -4,8 +4,8 @@ import android.graphics.Canvas;
 
 public class Enemy extends Creature{
 
-    public Enemy(int x, int y, float speed){
-        super(x, y, speed);
+    public Enemy(int x, int y, float speed, MyView view){
+        super(x, y, speed, view);
     }
 
     @Override
