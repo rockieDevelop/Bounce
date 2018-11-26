@@ -15,8 +15,6 @@ public class Tile {
     protected Bitmap texture;
     protected final int id;
 
-    protected int x = 0,y = 0;
-
     public Tile(Bitmap texture, int id){
         this.texture = texture;
         this.id = id;
@@ -37,20 +35,4 @@ public class Tile {
         return false;
     }
 
-    public boolean isDangerous(){
-        return false;
-    }
-
-    public void setX(int x){
-        this.x = x;
-    }
-    public void setY(int y){
-        this.y = y;
-    }
-    public int getX(){
-        return x;
-    }
-    public int getY(){
-        return y;
-    }
 }

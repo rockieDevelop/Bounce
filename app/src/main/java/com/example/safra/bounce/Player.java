@@ -1,6 +1,9 @@
 package com.example.safra.bounce;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.Log;
 
@@ -16,10 +19,14 @@ public class Player extends Creature {
         myLeft = (x*MyView.WIDTH)+(MyView.WIDTH/5);
         myTop = (y*MyView.HEIGHT)+(MyView.HEIGHT/4);
 
-        boundsX = MyView.WIDTH/10;
-        boundsY = MyView.HEIGHT/10;
-        boundsHeight = 2*MyView.HEIGHT/5;
-        boundsWidth = 2*MyView.WIDTH/3;
+        //boundsX = MyView.WIDTH/12;
+        //boundsY = MyView.HEIGHT/16;
+        //boundsHeight = 2*MyView.HEIGHT/5;
+        //boundsWidth = 2*MyView.WIDTH/3;
+        boundsX = 1*MyView.WIDTH/2/25;
+        boundsY = 1*MyView.HEIGHT/2/25;
+        boundsHeight = 23*MyView.HEIGHT/2/25;
+        boundsWidth = 23*MyView.WIDTH/2/25;
     }
 
     @Override
@@ -45,7 +52,12 @@ public class Player extends Creature {
             jumping = false;
             yMove = 0;
         }
-
+        if(collisionWith()){
+            view.restart();
+            xMove = 0;
+            yMove = 0;
+            Log.d("test", "DEAD");
+        }
         //myLeft = (x*MyView.WIDTH)+(MyView.WIDTH/5);
         //myTop = (y*MyView.HEIGHT)+(MyView.HEIGHT/4);
         //myRight = ((x+1)*MyView.WIDTH)-MyView.WIDTH/5;
@@ -56,8 +68,29 @@ public class Player extends Creature {
 
     @Override
     public void render(Canvas canvas) {
-        canvas.drawBitmap(MyView.BMP[5], myLeft, myTop, null);
-        //Log.d("test", "5 myLeft myTop render" + myLeft + " " + myTop);
+        Bitmap resized = Bitmap.createScaledBitmap(MyView.BMP[5], MyView.WIDTH/2, MyView.HEIGHT/2, true);
+        canvas.drawBitmap(resized, myLeft, myTop, null);
+        //Log.d("test", "x" + myLeft + "y" + myTop+"bX"+boundsX+"bY"+boundsY+"bW"+boundsWidth+"bH"+boundsHeight);
+        /*Paint myPaint = new Paint();
+        myPaint.setColor(Color.rgb(255, 0, 0));
+        myPaint.setStyle(Paint.Style.FILL);
+        canvas.drawRect(myLeft+ boundsX, myTop + boundsY,
+                myLeft+boundsX+boundsWidth, myTop+boundsY+boundsHeight, myPaint);*/
+    }
+
+    public boolean collisionWith(){
+        for(Obstacle o : view.getObstacles()) {
+            float px = o.getX()*MyView.WIDTH + o.getBoundsX();
+            float py = o.getY()*MyView.HEIGHT + o.getBoundsY();
+
+            if(((px >= myLeft && px <= myLeft + boundsX + boundsWidth)||
+                    (px + o.getBoundsWidth() >= myLeft && px + o.getBoundsWidth() <= myLeft + boundsX + boundsWidth)) &&
+                    ((py >= myTop && py <= myTop + boundsY + boundsHeight)||
+                            (py + o.getBoundsHeight() >= myTop && py + o.getBoundsHeight() <= myTop + boundsY + boundsHeight))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public float getDistanceJumped() {

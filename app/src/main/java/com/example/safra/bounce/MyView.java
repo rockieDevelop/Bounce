@@ -10,6 +10,8 @@ import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.os.CountDownTimer;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -30,16 +32,19 @@ public class MyView extends View{
     BitmapFactory.Options optionsRight = new BitmapFactory.Options();
     BitmapFactory.Options optionsUp = new BitmapFactory.Options();
 
-    public static int WIDTH;
-    public static int HEIGHT;
+    public static int WIDTH, HEIGHT;
+    public static int WIDTH_OF_SCREEN, HEIGHT_OF_SCREEN;
 
     private int bLeftX, bLeftY;
     private int bRightX, bRightY;
     private int bUpX, bUpY;
 
     private boolean firstUse = true;
+    private boolean restart = false;
+    private boolean restartHelp = false;
 
     private List<Enemy> enemies = new ArrayList<Enemy>();
+    private List<Obstacle> obstacles = new ArrayList<Obstacle>();
     //private List<Tile> tiles = new ArrayList<>();
     private int[][] tiles;
     private Player player;
@@ -159,6 +164,9 @@ public class MyView extends View{
         WIDTH = w / ly;
         HEIGHT = h / lx;
 
+        WIDTH_OF_SCREEN = w;
+        HEIGHT_OF_SCREEN = h;
+
         super.onSizeChanged(w, h, oldw, oldh);
     }
 
@@ -173,6 +181,9 @@ public class MyView extends View{
                 for (int j = 0; j < ly; j++) {
                     //tiles.add(new Tile(level[(i*12 + j)+7+(numOfEnemies*2)], j*WIDTH, (j+1)*WIDTH, i*HEIGHT, (i+1)*HEIGHT));
                     tiles[j][i] = level[(i*12 + j)+7+(numOfEnemies*2)];
+                    if(tiles[j][i] == 2){
+                        obstacles.add(new Obstacle(j, i));
+                    }
                 }
             }
 
@@ -180,23 +191,47 @@ public class MyView extends View{
 
             firstUse = false;
         }
-        Log.d("test",""+player.yMove);
+
         player.update();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        update();
+        if(restartHelp){
+            long now = 0;
+            long time = System.nanoTime();
+            while (now - time < 2000000000){
+                now = System.nanoTime();
+            }
+            restartHelp = false;
+            restart = false;
+        }
 
+        update();
         loadMap(canvas, level);
         player.render(canvas);
         drawButtons(canvas);
+        /*for(Obstacle o : obstacles)
+            o.render(canvas);*/
 
+        if(restart){
+            Paint paint = new Paint();
+            //paint.setColor(Color.WHITE);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(Color.WHITE);
+            paint.setTextSize(60);
+            canvas.drawText("Restart", WIDTH_OF_SCREEN/3, HEIGHT_OF_SCREEN/2, paint);
+            restartHelp = true;
+            /*try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }*/
+        }
         invalidate();
     }
 
     protected void drawButtons(Canvas canvas){
-
         bLeftX = WIDTH/2;
         bLeftY = (canvas.getHeight() - HEIGHT/2) - optionsLeft.outHeight;
         canvas.drawBitmap(MyView.BMP[6], null,
@@ -240,8 +275,15 @@ public class MyView extends View{
         if(t == null)
             return Tile.wall;
 
-        t.setX(x);
-        t.setY(y);
         return t;
+    }
+
+    public List<Obstacle> getObstacles() {
+        return obstacles;
+    }
+
+    public void restart(){
+        restart = true;
+        firstUse = true;
     }
 }
