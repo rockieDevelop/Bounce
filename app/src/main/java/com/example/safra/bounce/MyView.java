@@ -48,6 +48,7 @@ public class MyView extends View{
     //private List<Tile> tiles = new ArrayList<>();
     private int[][] tiles;
     private Player player;
+    private Gate gate;
 
     private int level[] = {
             12,12,1,10,7,7,         //lx, ly, playerX, playerY, gateX, gateY
@@ -172,10 +173,12 @@ public class MyView extends View{
 
     protected void update(){
         if(firstUse){
+            enemies.clear();
             for(int i = 0; i < numOfEnemies; i++){
-                enemies.add(new Enemy(level[7+(i*2)],level[8+(i*2)], 3, this));
+                enemies.add(new Enemy(level[7+(i*2)],level[8+(i*2)], 3, this, false, true));
             }
 
+            obstacles.clear();
             tiles = new int[lx][ly];
             for (int i = 0; i < lx; i++) {
                 for (int j = 0; j < ly; j++) {
@@ -188,10 +191,13 @@ public class MyView extends View{
             }
 
             player = new Player(playerX, playerY, 10, this);
+            gate = new Gate(gateX, gateY);
 
             firstUse = false;
         }
 
+        for(Enemy e : enemies)
+            e.update();
         player.update();
     }
 
@@ -209,6 +215,10 @@ public class MyView extends View{
 
         update();
         loadMap(canvas, level);
+        for (Enemy e : enemies){
+            e.render(canvas);
+        }
+        gate.render(canvas);
         player.render(canvas);
         drawButtons(canvas);
         /*for(Obstacle o : obstacles)
@@ -278,12 +288,22 @@ public class MyView extends View{
         return t;
     }
 
-    public List<Obstacle> getObstacles() {
-        return obstacles;
-    }
-
     public void restart(){
         restart = true;
         firstUse = true;
+    }
+
+    public void victory(){
+        Toast.makeText(getContext(), "VICTORY!!! " , Toast.LENGTH_SHORT).show();
+    }
+
+    public List<Obstacle> getObstacles() {
+        return obstacles;
+    }
+    public List<Enemy> getEnemies() {
+        return enemies;
+    }
+    public Gate getGate() {
+        return gate;
     }
 }

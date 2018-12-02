@@ -143,4 +143,9 @@ public abstract class Creature {
     public void setyMove(float yMove) {
         this.yMove = yMove;
     }
+
+    public int getBoundsX() {return boundsX;}
+    public int getBoundsY() {return boundsY;}
+    public int getBoundsWidth() {return boundsWidth;}
+    public int getBoundsHeight() {return boundsHeight;}
 }

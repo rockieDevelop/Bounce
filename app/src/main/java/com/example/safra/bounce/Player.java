@@ -58,6 +58,10 @@ public class Player extends Creature {
             yMove = 0;
             Log.d("test", "DEAD");
         }
+        if(atEnd()){
+            view.victory();
+            Log.d("vic", "victory");
+        }
         //myLeft = (x*MyView.WIDTH)+(MyView.WIDTH/5);
         //myTop = (y*MyView.HEIGHT)+(MyView.HEIGHT/4);
         //myRight = ((x+1)*MyView.WIDTH)-MyView.WIDTH/5;
@@ -89,6 +93,32 @@ public class Player extends Creature {
                             (py + o.getBoundsHeight() >= myTop && py + o.getBoundsHeight() <= myTop + boundsY + boundsHeight))) {
                 return true;
             }
+        }
+        for(Enemy e : view.getEnemies()) {
+            float px = e.getX() + e.getBoundsX();
+            float py = e.getY() + e.getBoundsY();
+
+            if(((px >= myLeft && px <= myLeft + boundsX + boundsWidth)||
+                    (px + e.getBoundsWidth() >= myLeft && px <= myLeft + boundsX + boundsWidth)) &&
+                    ((py >= myTop && py <= myTop + boundsY + boundsHeight)||
+                            (py + e.getBoundsHeight() >= myTop && py <= myTop + boundsY + boundsHeight))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean atEnd(){
+        Gate g = view.getGate();
+        float px = g.getX()*MyView.WIDTH + g.getBoundsX();
+        float py = g.getY()*MyView.HEIGHT + g.getBoundsY();
+
+        if(((px >= myLeft && px <= myLeft + boundsX + boundsWidth)||
+                (px + g.getBoundsWidth() >= myLeft && px <= myLeft + boundsX + boundsWidth)) &&
+                ((py >= myTop && py <= myTop + boundsY + boundsHeight)||
+                        (py + g.getBoundsHeight() >= myTop && py <= myTop + boundsY + boundsHeight))) {
+            return true;
         }
         return false;
     }
