@@ -1,6 +1,8 @@
 package com.example.safra.bounce;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -10,6 +12,8 @@ import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.CountDownTimer;
 import android.os.DropBoxManager;
@@ -34,10 +38,13 @@ import java.util.List;
 public class MyView extends View{
 
     public static Bitmap[] BMP;
+    public static SoundPlayer sound;
+    public static boolean optionSounds;
 
     BitmapFactory.Options optionsLeft = new BitmapFactory.Options();
     BitmapFactory.Options optionsRight = new BitmapFactory.Options();
     BitmapFactory.Options optionsUp = new BitmapFactory.Options();
+    BitmapFactory.Options optionsMenu = new BitmapFactory.Options();
 
     public static int MAX_LVL = 2;
     public static int WIDTH, HEIGHT;
@@ -45,11 +52,12 @@ public class MyView extends View{
 
     //LoadMapJson load;
 
-
+    Context context;
     int levelId = 0;
     private int bLeftX, bLeftY;
     private int bRightX, bRightY;
     private int bUpX, bUpY;
+    private int bMenuX, bMenuY;
 
     private boolean firstUse = true;
     boolean isReady = false;
@@ -87,6 +95,7 @@ public class MyView extends View{
     int gateX;// = level[4];
     int gateY;// = level[5];
     int numOfEnemies;// = level[6];
+    int playerXOrigin, playerYOrigin;
 
     public MyView(Context context) {
         super(context);
@@ -104,8 +113,8 @@ public class MyView extends View{
     }
 
     void init(Context context) {
-
-        BMP = new Bitmap[9];
+        this.context = context;
+        BMP = new Bitmap[10];
 
         BMP[0] = BitmapFactory.decodeResource(getResources(), R.drawable.empty);
         BMP[1] = BitmapFactory.decodeResource(getResources(), R.drawable.wall);
@@ -117,11 +126,17 @@ public class MyView extends View{
         BMP[6] = BitmapFactory.decodeResource(getResources(), R.drawable.arrowleft);
         BMP[7] = BitmapFactory.decodeResource(getResources(), R.drawable.arrowright);
         BMP[8] = BitmapFactory.decodeResource(getResources(), R.drawable.arrowup);
+        BMP[9] = BitmapFactory.decodeResource(getResources(), R.drawable.menu);
 
-        optionsLeft.inJustDecodeBounds =  optionsRight.inJustDecodeBounds = optionsUp.inJustDecodeBounds = true;
+        optionsLeft.inJustDecodeBounds =  optionsRight.inJustDecodeBounds = optionsUp.inJustDecodeBounds = optionsMenu.inJustDecodeBounds = true;
         BitmapFactory.decodeResource(getResources(),R.drawable.arrowleft, optionsLeft);
         BitmapFactory.decodeResource(getResources(),R.drawable.arrowright, optionsRight);
         BitmapFactory.decodeResource(getResources(),R.drawable.arrowup, optionsUp);
+        BitmapFactory.decodeResource(getResources(),R.drawable.menu, optionsMenu);
+
+        sound = new SoundPlayer(context);
+        menu.mySharedPref = context.getSharedPreferences("myPref", Context.MODE_PRIVATE);
+        optionSounds = menu.mySharedPref.getBoolean("sounds", true);
     }
 
 
@@ -158,6 +173,15 @@ public class MyView extends View{
                 {
                     player.setDistanceJumped(0);
                     player.jumping = true;
+                    if(optionSounds)
+                        sound.playJumpSound();
+                    //Toast.makeText(getContext(), "Up " , Toast.LENGTH_SHORT).show();
+                }
+
+                if( xDown > bMenuX && xDown < bMenuX + optionsMenu.outWidth*2 && yDown > bMenuY && yDown < bMenuY + optionsMenu.outHeight*2)
+                {
+                    Intent myIntent = new Intent(getContext(), menu.class);
+                    context.startActivity(myIntent);
                     //Toast.makeText(getContext(), "Up " , Toast.LENGTH_SHORT).show();
                 }
                 return true;
@@ -269,7 +293,9 @@ public class MyView extends View{
             paint.setTextSize(60);
             canvas.drawText("Loading", WIDTH_OF_SCREEN / 3, HEIGHT_OF_SCREEN / 2, paint);
         }
-        else{
+        else if(isNetworkAvailable()){
+            menu.mySharedPref = context.getSharedPreferences("myPref", Context.MODE_PRIVATE);
+            levelId = menu.mySharedPref.getInt("level",levelId);
             String levelUrl = "https://homel.vsb.cz/~saf0068/map" + levelId + ".txt";
             new LoadLevel().execute(levelUrl);
             Paint paint = new Paint();
@@ -279,6 +305,13 @@ public class MyView extends View{
             paint.setTextSize(60);
             canvas.drawText("Loading", WIDTH_OF_SCREEN / 3, HEIGHT_OF_SCREEN / 2, paint);
             isLoading = true;
+        }
+        else{
+            Paint paint = new Paint();
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(Color.RED);
+            paint.setTextSize(50);
+            canvas.drawText("No Internet Connection", WIDTH_OF_SCREEN / 7, HEIGHT_OF_SCREEN / 2, paint);
         }
         invalidate();
     }
@@ -298,6 +331,11 @@ public class MyView extends View{
         bUpY = (canvas.getHeight() - HEIGHT/2) - optionsUp.outHeight;
         canvas.drawBitmap(MyView.BMP[8], null,
                 new Rect( bUpX, bUpY, bUpX + (optionsUp.outWidth), bUpY + optionsUp.outHeight), null);
+
+        bMenuX = 0;
+        bMenuY = 0;
+        canvas.drawBitmap(MyView.BMP[9], null,
+                new Rect( bMenuX, bMenuY, bMenuX + (optionsMenu.outWidth), bMenuY + optionsMenu.outHeight), null);
     }
 
     protected void loadMap(Canvas canvas){
@@ -370,8 +408,12 @@ public class MyView extends View{
             }
             lx = level[0];
             ly = level[1];
-            playerX = level[2];
-            playerY = level[3];
+            menu.mySharedPref = context.getSharedPreferences("myPref", Context.MODE_PRIVATE);
+            playerXOrigin = level[2];
+            playerYOrigin = level[3];
+            playerX = menu.mySharedPref.getInt("pX",level[2]);
+            playerY = menu.mySharedPref.getInt("pY",level[3]);
+            Log.d("test",""+playerX + " " +playerY + " "+levelId + " "+lx+" " +ly);
             gateX = level[4];
             gateY = level[5];
             numOfEnemies = level[6];
@@ -383,20 +425,40 @@ public class MyView extends View{
         }
     }
 
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
     public class LevelData{
         int[] l;
         public LevelData(int[] l){this.l = l;}
     }
 
     public void restart(){
+        playerX = playerXOrigin;
+        playerY = playerYOrigin;
         restart = true;
         firstUse = true;
     }
 
     public void victory(){
         levelId++;
-        if(levelId > MAX_LVL)
+        if(levelId > MAX_LVL) {
             levelId = MAX_LVL;
+            if(optionSounds)
+                sound.playVictorySound();
+        }
+        else {
+            if(optionSounds)
+                sound.playSuccessSound();
+        }
+        menu.mySharedEditor = menu.mySharedPref.edit();
+        menu.mySharedEditor.remove("pX");
+        menu.mySharedEditor.remove("pY");
+        menu.mySharedEditor.putInt("level",levelId);
+        menu.mySharedEditor.apply();
         isReady = false;
         restart();
         Toast.makeText(getContext(), "VICTORY!!! " , Toast.LENGTH_SHORT).show();

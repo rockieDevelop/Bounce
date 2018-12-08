@@ -3,6 +3,7 @@ package com.example.safra.bounce;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.util.Log;
 
 public class MainActivity extends Activity {
 
@@ -13,4 +14,5 @@ public class MainActivity extends Activity {
         //StrictMode.setThreadPolicy(policy);
         setContentView(R.layout.activity_main);
     }
+
 }

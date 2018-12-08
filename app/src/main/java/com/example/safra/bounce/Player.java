@@ -32,6 +32,10 @@ public class Player extends Creature {
     @Override
     public void update() {
         move();
+        menu.mySharedEditor = menu.mySharedPref.edit();
+        menu.mySharedEditor.putInt("pX",(int)(myLeft+1)/MyView.WIDTH);
+        menu.mySharedEditor.putInt("pY",(int)(myTop+1)/MyView.HEIGHT);
+        menu.mySharedEditor.apply();
         if(falling){
             yMove += gravity;
             if(yMove > MAX_SPEED/2)
@@ -53,6 +57,8 @@ public class Player extends Creature {
             yMove = 0;
         }
         if(collisionWith()){
+            if(MyView.optionSounds)
+                MyView.sound.playDieSound();
             view.restart();
             xMove = 0;
             yMove = 0;
