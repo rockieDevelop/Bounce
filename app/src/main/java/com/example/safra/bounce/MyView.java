@@ -2,22 +2,15 @@ package com.example.safra.bounce;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.os.CountDownTimer;
-import android.os.DropBoxManager;
-import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -40,6 +33,7 @@ public class MyView extends View{
     public static Bitmap[] BMP;
     public static SoundPlayer sound;
     public static boolean optionSounds;
+    public static boolean optionGyroscope;
 
     BitmapFactory.Options optionsLeft = new BitmapFactory.Options();
     BitmapFactory.Options optionsRight = new BitmapFactory.Options();
@@ -53,6 +47,9 @@ public class MyView extends View{
     //LoadMapJson load;
 
     Context context;
+    private OrientationData orientationData;
+    private long frameTime;
+
     int levelId = 0;
     private int bLeftX, bLeftY;
     private int bRightX, bRightY;
@@ -137,6 +134,10 @@ public class MyView extends View{
         sound = new SoundPlayer(context);
         menu.mySharedPref = context.getSharedPreferences("myPref", Context.MODE_PRIVATE);
         optionSounds = menu.mySharedPref.getBoolean("sounds", true);
+        optionGyroscope = menu.mySharedPref.getBoolean("gyroscope", false);
+        orientationData = new OrientationData(context);
+        orientationData.register();
+        frameTime = System.currentTimeMillis();
     }
 
 
@@ -204,6 +205,9 @@ public class MyView extends View{
     }
 
     protected void update(){
+        int elapsedTime = (int) (System.currentTimeMillis() - frameTime);
+        frameTime = System.currentTimeMillis();
+
         if(firstUse){
             /*Log.d("testik","neco3");
             load = new LoadMapJson(getContext());
@@ -246,6 +250,20 @@ public class MyView extends View{
             firstUse = false;
             isLoading = false;
         }
+
+        if(optionGyroscope) {
+            if (orientationData.getOrientation() != null && orientationData.getStartOrientation() != null) {
+                //float pitch = orientationData.getOrientation()[1] - orientationData.getStartOrientation()[1];
+                float roll = orientationData.getOrientation()[2] - orientationData.getStartOrientation()[2];
+
+                float xSpeed = 2 * roll * WIDTH_OF_SCREEN / 1000f;
+                //float ySpeed = pitch * HEIGHT_OF_SCREEN/1000f;
+
+                player.setxMove(Math.abs(xSpeed * elapsedTime) > 5 ? xSpeed * elapsedTime : 0);
+                //player.setyMove(Math.abs(ySpeed*elapsedTime) > 5 ? ySpeed * elapsedTime : 0);
+            }
+        }
+
         for(Enemy e : enemies)
             e.update();
         player.update();
@@ -441,6 +459,7 @@ public class MyView extends View{
         playerY = playerYOrigin;
         restart = true;
         firstUse = true;
+        orientationData.newGame();
     }
 
     public void victory(){
